@@ -1,0 +1,81 @@
+{
+  "nome": "ptbr-geral",
+  "versao": 1,
+  "nota_maxima_queixa": 3,
+  "incluir_notas_altas": false,
+  "negacoes": ["nao", "nunca", "jamais", "sem", "nenhum", "nenhuma"],
+  "temas": {
+    "demora": {
+      "rotulo": "Demora e filas",
+      "solucao": "Agendamento online e gestão de filas",
+      "peso": 1,
+      "termos": ["demora*", "demorou", "demorad*", "esperei", "esperamos", "esperando", "muito tempo", "tempo de espera", "fila", "filas", "lent*", "atrasad*", "atrasou", "horas esperando"]
+    },
+    "sem_resposta": {
+      "rotulo": "Não responde (telefone / WhatsApp)",
+      "solucao": "Atendimento automático no WhatsApp (chatbot)",
+      "peso": 1.5,
+      "termos": ["nao respond*", "nao atend*", "ninguem atend*", "ninguem respond*", "nao retorn*", "sem retorno", "sem resposta", "vacuo", "nao consegui contato", "impossivel falar", "nao atende o telefone", "ligo e ninguem"]
+    },
+    "atendimento": {
+      "rotulo": "Atendimento ruim",
+      "solucao": "Treinamento de equipe e pesquisa de satisfação",
+      "peso": 1,
+      "termos": ["mal atendid*", "pessimo atendimento", "atendimento ruim", "atendimento pessimo", "atendimento horrivel", "grosseir*", "grosso", "mal educad*", "ignorante", "descaso", "desrespeit*", "arrogante", "antipatic*", "despreparad*", "falta de educacao", "falta de respeito"]
+    },
+    "preco": {
+      "rotulo": "Preço e cobrança",
+      "solucao": "Promoções e programa de fidelidade",
+      "peso": 0.8,
+      "termos": ["caro", "muito caro", "careiro", "preco abusivo", "preco alto", "abusivo", "abusivos", "cobranca indevida", "cobraram a mais", "taxa abusiva", "nao vale o preco", "salgado"]
+    },
+    "limpeza": {
+      "rotulo": "Limpeza e higiene",
+      "solucao": "Checklist digital de limpeza e conformidade",
+      "peso": 1,
+      "termos": ["sujo", "suja", "sujeira", "imundo", "imunda", "mau cheiro", "cheiro ruim", "barata*", "mosca*", "rato*", "falta de higiene", "higiene"]
+    },
+    "pedido_entrega": {
+      "rotulo": "Pedido errado ou entrega",
+      "solucao": "Gestão de pedidos e entregas",
+      "peso": 1,
+      "termos": ["pedido errado", "veio errado", "veio faltando", "faltou", "esqueceram", "entrega atras*", "nao entreg*", "nunca chegou", "chegou frio", "veio frio", "comida fria", "pedido atras*", "cancelaram meu pedido"]
+    },
+    "agendamento": {
+      "rotulo": "Agendamento e reserva",
+      "solucao": "Agendamento online com confirmação automática",
+      "peso": 1.5,
+      "termos": ["desmarc*", "cancelaram", "cancelou meu", "perdeu minha reserva", "perderam minha reserva", "nao consegui agendar", "nao consegui marcar", "dificil agendar", "dificil marcar", "sem reserva", "overbooking", "horario marcado"]
+    },
+    "informacao": {
+      "rotulo": "Informação errada ou desatualizada",
+      "solucao": "Atualização da presença digital (Google Perfil, site, cardápio)",
+      "peso": 1.5,
+      "termos": ["informacao errada", "informacoes erradas", "horario errado", "estava fechado", "encontrei fechado", "fechado fora do horario", "cardapio desatualizado", "preco diferente", "site fora", "endereco errado", "nao achei", "nao encontrei", "propaganda enganosa"]
+    },
+    "qualidade": {
+      "rotulo": "Qualidade do produto ou serviço",
+      "solucao": "Controle de qualidade e pesquisa pós-venda",
+      "peso": 1,
+      "termos": ["qualidade ruim", "pessima qualidade", "baixa qualidade", "defeito", "estragad*", "azedo", "queimad*", "mal feito", "mal feita", "mal executad*", "nao recomendo", "decepcion*"]
+    },
+    "estrutura": {
+      "rotulo": "Estrutura e ambiente",
+      "solucao": "",
+      "peso": 0.6,
+      "termos": ["estacionamento", "barulh*", "lotad*", "apertad*", "abafado", "sem ar", "desconfort*", "banheiro"]
+    },
+    "pagamento": {
+      "rotulo": "Meios de pagamento",
+      "solucao": "Pagamento online e PIX integrado",
+      "peso": 0.8,
+      "termos": ["nao aceita cartao", "nao aceitam cartao", "so dinheiro", "so aceita dinheiro", "nao aceita pix", "maquininha", "maquina quebrada", "sistema fora do ar", "sistema caiu"]
+    },
+    "confianca": {
+      "rotulo": "Golpe ou problema grave",
+      "solucao": "Gestão de reputação e resposta a avaliações",
+      "peso": 3,
+      "termos": ["golpe", "fraude", "enganad*", "procon", "reclame aqui", "processo", "estelionat*", "roubo", "roubaram"]
+    }
+  }
+}

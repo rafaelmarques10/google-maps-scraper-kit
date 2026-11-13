@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Parametrização · Coleta de reviews</title>
+<style nonce="__NONCE__">
+:root{--bg:#fafaf8;--fg:#1c1b1a;--mut:#6b6a66;--line:#dcdad3;--card:#fff;--acc:#1f6f5c;--bad:#b3261e;--warn:#9a6700}
+@media(prefers-color-scheme:dark){:root{--bg:#171716;--fg:#ecebe6;--mut:#a09f98;--line:#33322f;--card:#202020;--acc:#5cc2a6;--bad:#f2867f;--warn:#e0b04a}}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+h1{font-size:17px;margin:0 auto 0 0}main{max-width:1100px;margin:0 auto;padding:12px 16px 60px}
+nav{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0 14px}nav button{border:1px solid var(--line);background:var(--card);color:var(--fg);padding:8px 14px;border-radius:8px;cursor:pointer}
+nav button[aria-selected=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+section{display:none}section.on{display:block}
+fieldset{border:1px solid var(--line);border-radius:10px;background:var(--card);margin:0 0 14px;padding:12px 14px}
+legend{padding:0 6px;font-weight:600}label{display:block;font-size:13px;color:var(--mut);margin:8px 0 2px}
+input,select,textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);font:inherit}
+textarea{min-height:84px;resize:vertical}input[type=checkbox]{width:auto;margin-right:6px}.chk{display:flex;align-items:center;color:var(--fg);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0 14px}.hint{font-size:12px;color:var(--mut);margin:2px 0 0}
+button.p{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font:inherit}button.s{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;font:inherit}
+button.d{color:var(--bad)}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}.row>*{flex:0 0 auto}.row .grow{flex:1 1 200px}
+#msg{padding:8px 12px;border-radius:8px;margin:8px 0;display:none}#msg.ok{display:block;background:#1f6f5c22;color:var(--acc)}#msg.bad{display:block;background:#b3261e22;color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mut);font-weight:600;font-size:12px}
+tr.pl{cursor:pointer}tr.pl:hover{background:#8881}.chip{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:1px 8px;margin:1px 3px 1px 0;font-size:12px}
+.rv{border-left:3px solid var(--line);padding:4px 10px;margin:8px 0}.rv.low{border-color:var(--bad)}.rv small{color:var(--mut)}
+.theme{border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0;background:var(--bg)}.bars{display:flex;gap:3px;align-items:flex-end;height:44px;margin:6px 0}.bars i{display:block;width:14px;background:var(--acc);opacity:.75;min-height:1px}
+.big{font-size:22px;font-weight:700}.mut{color:var(--mut)}a{color:var(--acc)}.scroll{overflow-x:auto}
+</style></head><body>
+<header><h1>Coleta de reviews · parametrização</h1>
+<span class="mut" id="eng"></span>
+<input id="key" type="password" placeholder="X-API-Key (se houver)" style="width:200px" autocomplete="off">
+<select id="prof" style="width:170px" title="Perfis salvos"></select>
+<button class="s" id="profLoad">Carregar perfil</button><button class="s" id="profSave">Salvar perfil</button></header>
+<main>
+<div id="msg" role="status"></div>
+<nav id="tabs"></nav>
+
+<section id="t-busca"><fieldset><legend>1 · Onde buscar</legend>
+<label>Nome da coleta</label><input id="b-name" value="Prospecção de queixas">
+<label>Palavras-chave (uma por linha: tipo de negócio + lugar)</label>
+<textarea id="b-kw" placeholder="restaurantes em Taguatinga DF&#10;clínicas odontológicas em Taguatinga DF"></textarea>
+<div class="grid"><div><label>Latitude (opcional)</label><input id="b-lat" inputmode="decimal" placeholder="-15.8326"></div>
+<div><label>Longitude (opcional)</label><input id="b-lon" inputmode="decimal" placeholder="-48.0577"></div>
+<div><label>Buscar cidade</label><input id="b-city" list="cities" placeholder="digite a cidade"><datalist id="cities"></datalist></div></div>
+<p class="hint">Com latitude e longitude o mapa é centrado com precisão. Informe as duas ou nenhuma.</p>
+<div class="grid"><div><label>Profundidade</label><input id="b-depth" type="number" min="1" max="1000" value="3"><p class="hint">≈ 20 lugares por unidade; o Google para perto de 120 por busca.</p></div>
+<div><label>Idioma</label><input id="b-lang" value="pt" maxlength="2"></div><div><label>País</label><input id="b-country" value="br" maxlength="2"></div>
+<div><label>Tempo máximo (min)</label><input id="b-time" type="number" min="1" max="1440" value="15"></div></div>
+<label class="chk"><input type="checkbox" id="b-email" checked>Buscar e-mails nos sites dos negócios</label>
+<label class="chk"><input type="checkbox" id="b-soc" checked>Buscar redes sociais</label>
+<label>Proxies (opcional, um por linha)</label><textarea id="b-proxy" placeholder="http://usuario:senha@host:porta"></textarea>
+<p class="hint">Uso intenso sem proxy pode bloquear seu IP temporariamente no Google.</p></fieldset></section>
+
+<section id="t-reviews"><fieldset><legend>2 · Reviews de cada lugar</legend>
+<label class="chk"><input type="checkbox" id="r-on" checked>Coletar reviews completas depois da busca</label>
+<label>Ou usar uma busca já concluída (em vez de buscar de novo)</label><select id="r-src"></select>
+<div class="grid"><div><label>Máx. reviews por lugar</label><input id="r-max" type="number" min="1" max="2000" value="100"></div>
+<div><label>Só dos últimos (dias; 0 = todas)</label><input id="r-since" type="number" min="0" max="3650" value="365"></div>
+<div><label>Lugares com no mínimo (reviews)</label><input id="r-min" type="number" min="0" value="10"></div>
+<div><label>Lugares com nota até</label><input id="r-rate" type="number" min="1" max="5" step="0.1" value="4.5"><p class="hint">Quem tem 4,9 quase não tem queixa para vender.</p></div>
+<div><label>Máx. lugares</label><input id="r-places" type="number" min="1" max="500" value="50"></div>
+<div><label>Ritmo (s entre rolagens)</label><input id="r-pace" type="number" min="0.8" max="10" step="0.1" value="1.5"></div>
+<div><label>Tempo máximo (min)</label><input id="r-time" type="number" min="1" max="1440" value="30"></div></div>
+<label class="chk"><input type="checkbox" id="r-new" checked>Ordenar por mais recentes (permite parar ao passar da janela de dias)</label>
+<p class="hint">Gravamos: data, nota, texto sem telefone/e-mail/CPF/links, resposta do dono, link da review e um código do autor (hash). Nunca o nome nem a foto.</p></fieldset>
+<div class="row"><button class="p" id="run">Iniciar coleta</button><span class="mut" id="runHint"></span></div>
+<fieldset><legend>Coletas</legend><div class="scroll"><table id="jobs"></table></div><div class="row"><button class="s" id="jobsRef">Atualizar</button></div></fieldset></section>
+
+<section id="t-dic"><fieldset><legend>3 · Dicionário de palavras-chave</legend>
+<div class="row"><select id="d-sel" class="grow"></select><button class="s" id="d-load">Carregar</button>
+<input id="d-name" class="grow" placeholder="nome para salvar (ex.: clinicas)"><button class="p" id="d-save">Salvar dicionário</button><button class="s d" id="d-del">Excluir</button></div>
+<div class="grid"><div><label>Conta como queixa até a nota</label><select id="d-max"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+<div><label>&nbsp;</label><label class="chk"><input type="checkbox" id="d-high">Contar também reviews de nota alta</label></div></div>
+<label>Palavras de negação (uma por linha: "não demorou" não conta)</label><textarea id="d-neg" style="min-height:60px"></textarea>
+<p class="hint">Termos: sem acento, em minúsculas ou não (o motor normaliza). Use * no fim para variações: <code>demora*</code> acha demora, demorou, demorada. Várias palavras formam uma expressão.</p>
+<div id="themes"></div>
+<div class="row"><button class="s" id="d-add">+ Tema</button></div></fieldset>
+<fieldset><legend>Testar</legend><label>Texto de uma review</label><textarea id="x-text" style="min-height:60px" placeholder="Demorou mais de uma hora e ninguém atendeu o telefone"></textarea>
+<div class="row"><label style="margin:0">Nota</label><select id="x-nota" style="width:80px"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><button class="s" id="x-go">Testar</button><span id="x-out"></span></div></fieldset>
+<fieldset><legend>Aplicar nas reviews já coletadas</legend><p class="hint">Reclassifica tudo o que está no banco com o dicionário aberto acima. Não faz nenhum pedido novo ao Google.</p><button class="s" id="d-apply">Aplicar agora</button></fieldset></section>
+
+<section id="t-res"><fieldset><legend>4 · Resultados</legend>
+<div class="grid"><div><label>Janela (dias)</label><input id="f-since" type="number" value="365" min="1"></div>
+<div><label>Mín. reviews coletadas</label><input id="f-min" type="number" value="5" min="0"></div>
+<div><label>Tema</label><select id="f-theme"><option value="">todos</option></select></div>
+<div><label>Dicionário dos pesos</label><select id="f-lex"></select></div></div>
+<div class="row"><button class="p" id="f-go">Atualizar ranking</button><button class="s" id="f-csv">Baixar CSV (anonimizado)</button></div>
+<div class="scroll"><table id="board"></table></div></fieldset>
+<fieldset><legend>Busca por palavra-chave nas reviews coletadas</legend>
+<div class="row"><input id="s-q" class="grow" placeholder="palavras separadas por vírgula: demora, fila, não atende"><select id="s-mode" style="width:150px"><option value="any">qualquer palavra</option><option value="all">todas as palavras</option></select>
+<select id="s-rate" style="width:130px"><option value="0">qualquer nota</option><option value="2">até 2★</option><option value="3">até 3★</option><option value="4">até 4★</option></select><button class="p" id="s-go">Buscar</button></div>
+<div id="s-out"></div></fieldset></section>
+</main>
+<script nonce="__NONCE__">
+const $ = s => document.querySelector(s);
+const el = (t, a = {}, ...kids) => { const e = document.createElement(t);
+  for (const [k, v] of Object.entries(a)) { if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v); }
+  kids.flat().forEach(c => e.append(c)); return e; };
+async function api(method, path, body) {
+  const h = {}, key = $('#key').value; if (key) h['X-API-Key'] = key; if (body !== undefined) h['Content-Type'] = 'application/json';
+  try { const r = await fetch(path, {method, headers: h, body: body === undefined ? undefined : JSON.stringify(body)});
+    let data = null; try { data = await r.json(); } catch (e) {} return {ok: r.ok, status: r.status, data, res: r};
+  } catch (e) { return {ok: false, status: 0, data: {message: 'sem conexão com o engine'}}; } }
+let timer; function say(t, kind) { const m = $('#msg'); m.textContent = t; m.className = kind || 'ok'; clearTimeout(timer); timer = setTimeout(() => m.className = '', 7000); }
+const fail = r => say((r.data && r.data.message) || ('erro ' + r.status), 'bad');
+const lines = s => s.split('\n').map(x => x.trim()).filter(Boolean);
+const safe = u => /^https:\/\/(www\.)?google\.[a-z.]+\//.test(u || '') ? u : null;
+const slug = s => s.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_|_$/g, '').slice(0, 40);
+
+// ── tabs ──
+const TABS = [['busca', '1 · Busca'], ['reviews', '2 · Reviews'], ['dic', '3 · Dicionário'], ['res', '4 · Resultados']];
+TABS.forEach(([id, name]) => $('#tabs').append(el('button', {text: name, 'aria-selected': 'false', 'data-t': id, onclick: () => show(id)})));
+function show(id) { TABS.forEach(([t]) => { $('#t-' + t).classList.toggle('on', t === id);
+  document.querySelector(`[data-t=${t}]`).setAttribute('aria-selected', String(t === id)); });
+  if (id === 'reviews') { loadJobs(); loadSources(); } if (id === 'res') board(); }
+try { $('#key').value = sessionStorage.getItem('key') || ''; } catch (e) {}
+$('#key').addEventListener('change', () => { try { sessionStorage.setItem('key', $('#key').value); } catch (e) {} boot(); });
+
+// ── search form ──
+let cityTimer; $('#b-city').addEventListener('input', () => { clearTimeout(cityTimer); cityTimer = setTimeout(async () => {
+  const q = $('#b-city').value.trim(); if (q.length < 2) return; const r = await api('GET', '/api/v1/cities?q=' + encodeURIComponent(q));
+  if (!r.ok || !Array.isArray(r.data)) return; const dl = $('#cities'); dl.replaceChildren();
+  r.data.forEach(c => dl.append(el('option', {value: c.label, 'data-lat': c.lat, 'data-lon': c.lon}))); }, 250); });
+$('#b-city').addEventListener('change', () => { const o = [...$('#cities').children].find(x => x.value === $('#b-city').value);
+  if (o) { $('#b-lat').value = o.dataset.lat; $('#b-lon').value = o.dataset.lon; } });
+
+function leadBody() {
+  const kws = lines($('#b-kw').value); if (!kws.length) throw new Error('Informe ao menos uma palavra-chave de busca.');
+  const lat = $('#b-lat').value.trim(), lon = $('#b-lon').value.trim(); if (!!lat !== !!lon) throw new Error('Informe latitude e longitude, ou nenhuma.');
+  const b = {name: $('#b-name').value.trim() || 'Prospecção', keywords: kws, lang: $('#b-lang').value.trim() || 'pt', country: $('#b-country').value.trim() || 'br',
+    depth: +$('#b-depth').value || 1, max_time: Math.round((+$('#b-time').value || 15) * 60), email: $('#b-email').checked, socials: $('#b-soc').checked};
+  if (lat) { b.lat = lat; b.lon = lon; } const px = lines($('#b-proxy').value); if (px.length) b.proxies = px; return b; }
+function reviewBody(source) {
+  return {name: $('#b-name').value.trim() || 'Reviews', source_job: source, max_reviews: +$('#r-max').value || 100, since_days: +$('#r-since').value,
+    min_reviews: +$('#r-min').value, max_place_rating: +$('#r-rate').value || 5, max_places: +$('#r-places').value || 50, pace: +$('#r-pace').value || 1.5,
+    max_time: Math.round((+$('#r-time').value || 30) * 60), sort_newest: $('#r-new').checked, lang: $('#b-lang').value.trim() || 'pt',
+    country: $('#b-country').value.trim() || 'br', lexicon: $('#d-name').value.trim() || $('#d-sel').value || 'ptbr-geral',
+    proxies: lines($('#b-proxy').value)}; }
+$('#run').addEventListener('click', async () => {
+  try { let src = $('#r-src').value;
+    if (!src) { const r = await api('POST', '/api/v1/jobs', leadBody()); if (!r.ok) return fail(r); src = r.data.id; say('Busca de lugares criada.'); }
+    if ($('#r-on').checked) { const nm = $('#d-name').value.trim();
+      if (nm) { const pr = await api('PUT', '/api/v1/lexicons/' + encodeURIComponent(nm), readLex()); if (!pr.ok) return fail(pr); await loadLexList(); }
+      const r = await api('POST', '/api/v1/review-jobs', reviewBody(src)); if (!r.ok) return fail(r);
+      say('Coleta criada: ela começa quando a busca de lugares terminar.'); }
+    show('reviews'); } catch (e) { say(e.message, 'bad'); } });
+
+async function loadSources() { const r = await api('GET', '/api/v1/jobs'); const s = $('#r-src'); const cur = s.value; s.replaceChildren(el('option', {value: '', text: '— fazer a busca agora —'}));
+  (r.data || []).filter(j => j.Status === 'ok').forEach(j => s.append(el('option', {value: j.ID, text: `${j.Name} · ${(j.Date || '').slice(0, 10)}`}))); s.value = cur; }
+async function loadJobs() { const r = await api('GET', '/api/v1/review-jobs'); const t = $('#jobs'); t.replaceChildren(el('tr', {}, ...['Coleta', 'Situação', 'Lugares', 'Reviews', 'Avisos', ''].map(h => el('th', {text: h}))));
+  (r.data || []).forEach(j => { const p = j.progress || {}; t.append(el('tr', {}, el('td', {text: j.name}), el('td', {text: j.status + (j.error ? ' · ' + j.error : '')}),
+    el('td', {text: `${p.places_done || 0}/${p.places_total || '?'}`}), el('td', {text: String(p.reviews || 0)}), el('td', {text: (p.notes || []).slice(-3).join(' | ')}),
+    el('td', {}, j.status === 'running' || j.status === 'queued' ? el('button', {class: 's', text: 'Parar', onclick: async () => { await api('POST', `/api/v1/review-jobs/${j.id}/stop`); loadJobs(); }}) : el('button', {class: 's d', text: 'Apagar', onclick: async () => { if (confirm('Apagar a coleta e as reviews dela?')) { await api('DELETE', '/api/v1/review-jobs/' + j.id); loadJobs(); } }})))); }); }
+$('#jobsRef').addEventListener('click', loadJobs); setInterval(() => { if ($('#t-reviews').classList.contains('on')) loadJobs(); }, 5000);
+
+// ── dictionary editor ──
+let lex = {nome: '', nota_maxima_queixa: 3, incluir_notas_altas: false, negacoes: [], temas: {}};
+function renderLex() { $('#d-max').value = String(lex.nota_maxima_queixa); $('#d-high').checked = !!lex.incluir_notas_altas; $('#d-neg').value = (lex.negacoes || []).join('\n');
+  const box = $('#themes'); box.replaceChildren();
+  Object.entries(lex.temas).forEach(([k, t]) => { const d = el('div', {class: 'theme', 'data-k': k});
+    d.append(el('div', {class: 'grid'}, el('div', {}, el('label', {text: 'Tema'}), el('input', {class: 't-r', value: t.rotulo || k})),
+      el('div', {}, el('label', {text: 'Solução que você vende'}), el('input', {class: 't-s', value: t.solucao || ''})),
+      el('div', {}, el('label', {text: 'Peso (0,1–10)'}), el('input', {class: 't-p', type: 'number', min: '0.1', max: '10', step: '0.1', value: t.peso || 1}))),
+      el('label', {text: 'Termos (um por linha)'}), el('textarea', {class: 't-t'}), el('div', {class: 'row'}, el('button', {class: 's d', text: 'Remover tema', onclick: () => { delete lex.temas[k]; renderLex(); }})));
+    d.querySelector('.t-t').value = (t.termos || []).join('\n'); box.append(d); });
+  const f = $('#f-theme'), cur = f.value; f.replaceChildren(el('option', {value: '', text: 'todos'})); Object.entries(lex.temas).forEach(([k, t]) => f.append(el('option', {value: k, text: t.rotulo || k}))); f.value = cur; }
+function readLex() { const temas = {}; document.querySelectorAll('#themes .theme').forEach((d, i) => { const r = d.querySelector('.t-r').value.trim() || 'tema ' + (i + 1);
+    let k = slug(r) || 'tema_' + (i + 1); while (temas[k]) k += '_2';
+    temas[k] = {rotulo: r, solucao: d.querySelector('.t-s').value.trim(), peso: +d.querySelector('.t-p').value || 1, termos: lines(d.querySelector('.t-t').value)}; });
+  return {nome: $('#d-name').value.trim() || lex.nome || 'personalizado', versao: 1, nota_maxima_queixa: +$('#d-max').value, incluir_notas_altas: $('#d-high').checked, negacoes: lines($('#d-neg').value), temas}; }
+$('#d-add').addEventListener('click', () => { lex = readLex(); lex.temas['novo_' + Object.keys(lex.temas).length] = {rotulo: 'Novo tema', solucao: '', peso: 1, termos: []}; renderLex(); });
+async function loadLexList() { const r = await api('GET', '/api/v1/lexicons'); if (!r.ok) return; const names = [...(r.data.presets || []), ...(r.data.meus || []).filter(x => !(r.data.presets || []).includes(x))];
+  for (const sel of [$('#d-sel'), $('#f-lex')]) { const cur = sel.value; sel.replaceChildren(...names.map(n => el('option', {value: n, text: n}))); if (names.includes(cur)) sel.value = cur; } }
+$('#d-load').addEventListener('click', async () => { const r = await api('GET', '/api/v1/lexicons/' + encodeURIComponent($('#d-sel').value)); if (!r.ok) return fail(r); lex = r.data; $('#d-name').value = lex.nome || ''; renderLex(); say('Dicionário carregado.'); });
+$('#d-save').addEventListener('click', async () => { const body = readLex(), name = $('#d-name').value.trim(); if (!name) return say('Dê um nome ao dicionário.', 'bad');
+  const r = await api('PUT', '/api/v1/lexicons/' + encodeURIComponent(name), body); if (!r.ok) return fail(r); say('Dicionário salvo: ' + r.data.nome); lex = body; await loadLexList(); $('#d-sel').value = r.data.nome; });
+$('#d-del').addEventListener('click', async () => { const n = $('#d-sel').value; if (!confirm('Excluir o dicionário "' + n + '"? (os que vêm com o kit não são apagados)')) return; const r = await api('DELETE', '/api/v1/lexicons/' + encodeURIComponent(n)); r.ok ? say('Excluído.') : fail(r); loadLexList(); });
+$('#x-go').addEventListener('click', async () => { const r = await api('POST', '/api/v1/lexicons/test', {lexicon: readLex(), texto: $('#x-text').value, nota: +$('#x-nota').value}); const o = $('#x-out'); o.replaceChildren();
+  if (!r.ok) return fail(r); const e = Object.entries(r.data.temas); if (!e.length) o.append(el('span', {class: 'mut', text: 'nenhuma queixa encontrada'})); e.forEach(([k, v]) => o.append(el('span', {class: 'chip', text: `${(lex.temas[k] || readLex().temas[k] || {}).rotulo || k}: ${v.join(', ')}`}))); });
+$('#d-apply').addEventListener('click', async () => { const r = await api('POST', '/api/v1/reviews/reclassify', {lexicon: readLex()}); r.ok ? say(`${r.data.reviews} reviews reclassificadas.`) : fail(r); });
+
+// ── results ──
+const pct = v => (v == null ? '—' : String(v).replace('.', ',') + '%');
+function revNode(r) { const link = safe(r.review_url); const d = el('div', {class: 'rv' + (r.nota <= 2 ? ' low' : '')});
+  d.append(el('small', {text: `${'★'.repeat(r.nota || 0)} · ${r.data || 's/ data'}${r.data_precisao && r.data_precisao !== 'dia' ? ' (aprox. ' + r.data_precisao + ')' : ''} · autor ${r.autor_id || 'n/d'}${r.lugar ? ' · ' + r.lugar : ''}`}), el('div', {text: r.texto || '(sem texto)'}));
+  const tags = el('div', {}); (r.temas || []).forEach(t => tags.append(el('span', {class: 'chip', text: `${t}: ${(r.termos[t] || []).join(', ')}`}))); d.append(tags);
+  if (r.resposta_dono) d.append(el('small', {text: 'Resposta do dono: ' + r.resposta_dono}));
+  if (link) d.append(el('div', {}, el('a', {href: link, target: '_blank', rel: 'noopener noreferrer', text: r.url_exata ? 'ver esta review no Google ↗' : 'abrir o lugar no Google ↗ (link exato da review indisponível)'}))); return d; }
+async function board() { const q = new URLSearchParams({since_days: $('#f-since').value, min_reviews: $('#f-min').value, theme: $('#f-theme').value, lexicon: $('#f-lex').value || 'ptbr-geral'});
+  const r = await api('GET', '/api/v1/reviews/leaderboard?' + q); if (!r.ok) return fail(r); const t = $('#board');
+  t.replaceChildren(el('tr', {}, ...['Lugar', 'Nota', 'Coletadas', 'Com queixa', 'Pontuação', 'Responde queixas', 'Principais temas'].map(h => el('th', {text: h}))));
+  if (!r.data.length) t.append(el('tr', {}, el('td', {colspan: '7', class: 'mut', text: 'Nada coletado ainda (ou nenhum lugar passou nos filtros).'})));
+  r.data.forEach(p => { const i = p.indicadores; const tr = el('tr', {class: 'pl'}); const chips = el('td', {});
+    Object.entries(i.temas).slice(0, 4).forEach(([k, v]) => chips.append(el('span', {class: 'chip', text: `${(lex.temas[k] || {}).rotulo || k} ${pct(v.pct)}`})));
+    tr.append(el('td', {text: p.lugar}), el('td', {text: p.nota_lugar == null ? '—' : String(p.nota_lugar)}), el('td', {text: `${i.total} (${i.periodo} na janela)`}),
+      el('td', {text: `${i.com_queixa} · ${pct(i.pct_queixa)}`}), el('td', {text: String(i.score_dor)}), el('td', {text: pct(i.taxa_resposta)}), chips);
+    const detail = el('tr', {style: 'display:none'}, el('td', {colspan: '7'})); tr.addEventListener('click', async () => {
+      if (detail.style.display === 'none') { const cell = detail.firstChild; cell.replaceChildren(el('span', {class: 'mut', text: 'carregando…'})); detail.style.display = '';
+        const rr = await api('GET', '/api/v1/reviews/place?' + new URLSearchParams({id: p.place_id, theme: $('#f-theme').value})); cell.replaceChildren();
+        const max = Math.max(1, ...i.tendencia.map(m => m.total)); cell.append(el('div', {class: 'bars', title: 'reviews por mês (os últimos 12)'}, ...i.tendencia.map(m => el('i', {style: `height:${Math.round(40 * m.total / max)}px`, title: `${m.mes}: ${m.total} reviews, ${m.queixas} com queixa`}))));
+        [p.telefone, p.site].filter(Boolean).forEach(x => cell.append(el('span', {class: 'chip', text: x}))); (rr.data || []).filter(x => $('#f-theme').value || x.temas.length).slice(0, 40).forEach(x => cell.append(revNode(x))); }
+      else detail.style.display = 'none'; }); t.append(tr, detail); }); }
+$('#f-go').addEventListener('click', board);
+$('#f-csv').addEventListener('click', async () => { const h = {}; if ($('#key').value) h['X-API-Key'] = $('#key').value; const r = await fetch('/api/v1/reviews/export', {headers: h}); if (!r.ok) return say('erro ' + r.status, 'bad');
+  const u = URL.createObjectURL(await r.blob()); const a = el('a', {href: u, download: 'reviews-anonimizadas.csv'}); document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(u); });
+$('#s-go').addEventListener('click', async () => { const q = $('#s-q').value.trim(); if (!q) return say('Digite as palavras a buscar.', 'bad');
+  const r = await api('GET', '/api/v1/reviews/search?' + new URLSearchParams({q, mode: $('#s-mode').value, max_rating: $('#s-rate').value})); if (!r.ok) return fail(r);
+  const o = $('#s-out'); o.replaceChildren(el('p', {class: 'mut', text: `${r.data.length} reviews`})); r.data.forEach(x => o.append(revNode(x))); });
+
+// ── profiles ──
+const IDS = ['b-name', 'b-kw', 'b-lat', 'b-lon', 'b-depth', 'b-lang', 'b-country', 'b-time', 'b-proxy', 'r-max', 'r-since', 'r-min', 'r-rate', 'r-places', 'r-pace', 'r-time', 'd-name'], CHK = ['b-email', 'b-soc', 'r-on', 'r-new'];
+async function profList() { const r = await api('GET', '/api/v1/profiles'); const s = $('#prof'); s.replaceChildren(el('option', {value: '', text: '— perfis —'})); ((r.data || {}).meus || []).forEach(n => s.append(el('option', {value: n, text: n}))); }
+$('#profSave').addEventListener('click', async () => { const n = prompt('Nome do perfil (ex.: restaurantes-taguatinga):', $('#prof').value); if (!n) return;
+  const body = {}; IDS.forEach(i => body[i] = $('#' + i).value); CHK.forEach(i => body[i] = $('#' + i).checked); body.lexicon = readLex();
+  const r = await api('PUT', '/api/v1/profiles/' + encodeURIComponent(n), body); r.ok ? say('Perfil salvo.') : fail(r); profList(); });
+$('#profLoad').addEventListener('click', async () => { const n = $('#prof').value; if (!n) return; const r = await api('GET', '/api/v1/profiles/' + encodeURIComponent(n)); if (!r.ok) return fail(r);
+  IDS.forEach(i => { if (r.data[i] != null) $('#' + i).value = r.data[i]; }); CHK.forEach(i => { if (r.data[i] != null) $('#' + i).checked = r.data[i]; });
+  if (r.data.lexicon) { lex = r.data.lexicon; renderLex(); } say('Perfil carregado.'); });
+
+async function boot() { const r = await api('GET', '/api/v1/lexicons'); if (r.status === 401) { say('Informe a X-API-Key no topo da página.', 'bad'); return; }
+  $('#eng').textContent = r.ok ? 'engine ok' : 'engine indisponível'; await loadLexList(); await profList();
+  if (!Object.keys(lex.temas).length) { const p = await api('GET', '/api/v1/lexicons/ptbr-geral'); if (p.ok) { lex = p.data; $('#d-name').value = ''; renderLex(); } } }
+show('busca'); boot();
+</script></body></html>

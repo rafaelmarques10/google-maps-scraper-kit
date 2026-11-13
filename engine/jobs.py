@@ -15,7 +15,7 @@ import concurrent.futures, csv, html, http.client, io, ipaddress, json, math, os
 import shutil, sqlite3, tempfile, threading, time, urllib.parse, urllib.request, uuid
 from datetime import datetime, timezone
 
-import browser, details, maps
+import browser, details, gate, maps
 from cdp import CDPError, Page
 
 csv.field_size_limit(2 ** 31 - 1)  # a long cell (a description, a 1.x file) can pass csv's 128 KB default
@@ -548,7 +548,8 @@ class Worker(threading.Thread):
                     self.wake.wait(5)
                     self.wake.clear()
                     continue
-                self.run_job(job)
+                with gate.GOOGLE:  # a reviews job in progress finishes first: never two scrapes at once
+                    self.run_job(job)
             except Exception as e:  # noqa: BLE001 - one bad job (or a full disk) must never stop the worker
                 reason = f"{type(e).__name__}: {e}"
                 for attempt in (1, 2):  # the second try after a pause: a full disk may have room again

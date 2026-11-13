@@ -20,7 +20,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import browser, jobs  # noqa: E402
+import browser, jobs, review_api, reviews, store as review_store  # noqa: E402
 
 for _stream in (sys.stdout, sys.stderr):  # ✓ and accented names on a Windows cp1252 console
     try:
@@ -741,7 +741,7 @@ class Handler(BaseHTTPRequestHandler):
             self.fail(403, "requests from other websites are refused")
             return False
         key, path = self.server.api_key, self.path.split("?")[0]
-        if key and path not in ("/", "/api/docs", "/api/openapi.json") and not hmac.compare_digest(
+        if key and path not in ("/", "/parametrizacao", "/api/docs", "/api/openapi.json") and not hmac.compare_digest(
                 self.headers.get("X-API-Key", "").encode("latin-1", "replace"), key.encode()):  # headers arrive as latin-1
             self.fail(401, "missing or wrong X-API-Key")
             return False
@@ -789,6 +789,8 @@ class Handler(BaseHTTPRequestHandler):
             return
         path, _, query = self.path.partition("?")
         store = self.server.store
+        if review_api.handles(path):
+            return review_api.dispatch(self, "GET", path, query, _REPLIED)
         if path == "/api/v1/jobs":  # null when empty, as before: the docs' health check
             return self.reply(200, [jobs.public(j) for j in store.all()] or None)
         m = JOB_PATH.match(path)
@@ -824,6 +826,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.guard():
             return
+        if review_api.handles(self.path.split("?")[0]):
+            return review_api.dispatch(self, "POST", *self.path.partition("?")[::2], _REPLIED)
         if self.path.split("?")[0] != "/api/v1/jobs":
             return self.fail(404, "not found")
         body = self.body()
@@ -843,9 +847,18 @@ class Handler(BaseHTTPRequestHandler):
         log(f"job {jid} created: {len(data['keywords'])} keyword(s)")
         self.reply(201, {"id": jid})
 
+    def do_PUT(self):
+        if not self.guard():
+            return
+        if review_api.handles(self.path.split("?")[0]):
+            return review_api.dispatch(self, "PUT", *self.path.partition("?")[::2], _REPLIED)
+        self.fail(404, "not found")
+
     def do_DELETE(self):
         if not self.guard():
             return
+        if review_api.handles(self.path.split("?")[0]):
+            return review_api.dispatch(self, "DELETE", *self.path.partition("?")[::2], _REPLIED)
         m = JOB_PATH.match(self.path.split("?")[0])
         if not m or m.group(2):
             return self.fail(404, "not found")
@@ -904,7 +917,7 @@ def in_container():
     return os.path.exists("/.dockerenv") or os.path.exists("/run/.containerenv")
 
 
-def make_servers(port, store, worker, api_key="", host="127.0.0.1"):
+def make_servers(port, store, worker, api_key="", host="127.0.0.1", reviews_svc=None):
     """The server on host:port. On 127.0.0.1 also one on [::1]:port when this machine has IPv6
     loopback (Windows tries ::1 first for "localhost" and waits ~2 s before falling back)."""
     if port and port_taken(port):
@@ -916,7 +929,7 @@ def make_servers(port, store, worker, api_key="", host="127.0.0.1"):
         except OSError:
             pass
     for s in servers:
-        s.store, s.worker, s.api_key = store, worker, api_key
+        s.store, s.worker, s.api_key, s.reviews = store, worker, api_key, reviews_svc
     return servers
 
 
@@ -948,8 +961,11 @@ def main():
     store = jobs.Store(a.data)
     headless = env["SCRAPER_HEADLESS"].strip().lower() not in ("0", "false", "no", "off")
     worker = jobs.Worker(store, log, headless=headless)
+    rstore = review_store.ReviewStore(a.data)
+    rworker = reviews.ReviewsWorker(rstore, store, log, headless=headless)
+    rsvc = type("ReviewsService", (), {"store": rstore, "worker": rworker})()
     try:
-        servers = make_servers(port, store, worker, env["SCRAPER_API_KEY"], a.host)
+        servers = make_servers(port, store, worker, env["SCRAPER_API_KEY"], a.host, rsvc)
     except OSError as e:
         sys.exit(f"✗ Cannot listen on {a.host}:{port}: {e}")
     # Only now: an engine that cannot bind (another one runs on this data) must not touch its jobs.
@@ -966,7 +982,9 @@ def main():
         log(f"kit 1.x jobs not imported, tried again on the next start: {type(e).__name__}: {e}")
     if imported:
         log(f"{imported} job(s) from kit 1.x imported with their results")
+    rstore.recover()
     worker.start()
+    rworker.start()
     chrome = browser.find_chrome()
     where = f"http://localhost:{port}" if a.host == "127.0.0.1" else \
         f"{a.host}:{port} in this container, published on the host's 127.0.0.1"
@@ -989,6 +1007,7 @@ def main():
         log(f"engine crashed: {type(e).__name__}: {e}")
         code = 1
     finally:
+        rworker.shutdown()
         worker.shutdown(wait=8)  # the job in progress saves its place and resumes on the next start
         log("engine stopped")
         # Website-pass threads may still be inside a fetch (up to SITE_HARD s each); the interpreter
